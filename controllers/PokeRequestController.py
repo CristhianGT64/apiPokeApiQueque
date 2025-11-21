@@ -75,3 +75,36 @@ async def get_all_request() -> dict:
         id = record['ReportId']
         record['url'] = f"{record['url']}?{blob.generate_sas(id)}"
     return result_dict
+
+async def delete_pokemon_request( id: int ) -> dict:
+    try:
+        # Verificar si el request existe antes de eliminar
+        query_check = "select * from pokequeue.requests where id = ?"
+        params_check = (id,)
+        result_check = await execute_query_json( query_check , params_check )
+        result_check_dict = json.loads(result_check)
+        if not result_check_dict:
+            raise HTTPException( status_code=404 , detail="No se encontro el reporte" )
+        
+        # Intentar borrar el blob del contenedor Azure Blob Storage
+        try:
+            blob = ABlob()
+            blob_deleted = blob.delete_blob(id)
+            if blob_deleted:
+                logger.info(f"Blob poke_report_{id}.csv eliminado correctamente de Azure Blob Storage.")
+            else:
+                logger.warning(f"El blob poke_report_{id}.csv no se encontró en Azure Blob Storage.")
+        except Exception as blob_error:
+            logger.error(f"Error al eliminar el blob del contenedor: {blob_error}")
+            # No interrumpimos el flujo, continuamos con el borrado de BD
+
+        # Borrar el registro de la base de datos
+        query = " exec pokequeue.sp_EliminarReportePorId ? "
+        params = ( id , )
+        result = await execute_query_json( query , params, True )
+        result_dict = json.loads(result)
+        logger.info(f"Registro {id} eliminado correctamente de la base de datos.")
+        return result_dict
+    except Exception as e:
+        logger.error( f"Error deleting report request {e}" )
+        raise HTTPException( status_code=500 , detail="Internal Server Error eliminar" )
