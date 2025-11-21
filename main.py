@@ -24,7 +24,7 @@ async def root():
 
 @app.get("/api/version")
 async def version():
-    return { "version":  "0.3.2" }
+    return { "version":  "0.5.0" }
 
 
 @app.get("/api/request/{id}")
@@ -38,6 +38,7 @@ async def select_all_request():
 @app.post("/api/request")
 async def create_request(pokemon_request: PokemonRequest):
     return await insert_pokemon_request( pokemon_request )
+
 
 @app.put("/api/request")
 async def update_request(pokemon_request: PokemonRequest):

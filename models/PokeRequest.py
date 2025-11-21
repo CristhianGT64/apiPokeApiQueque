@@ -26,3 +26,10 @@ class PokemonRequest(BaseModel):
         description="Estado de la peticion",
         pattern="^(sent|completed|failed|inprogress)$"
     )
+
+    """ Con esto el sample size debe de ser mayor a 0 """
+    sample_size : Optional[int] = Field(
+        default=None,
+        gt=0,
+        description="Tamaño de muestra (opcional, debe ser > 0)"
+    )
